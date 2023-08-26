@@ -21,14 +21,14 @@ ZillowScraper is a Python package designed for scraping real estate data from Zi
 ```
 git clone https://github.com/hansenrhan/zillow_scraper.git
 cd zillow_scraper
-pip install -r requirements.txt
+python setup.py install
 ```
 
 
 ## Basic Usage
 
 ```Python
-from zillow_scraper import zillow_scraper.collect_real_estate_data
+import zillow_scraper
 
 # Define the target locations and types of properties to scrape
 # locations should follow a city-state format
@@ -36,7 +36,7 @@ locations = ["manhattan-ny", "san-francisco-ca"]
 property_types = ["rent", "sale"]
 
 # Collect and save the data
-collect_real_estate_data(locations, property_types)
+zillow_scraper.collect_real_estate_data(locations, property_types)
 
 ```
 
