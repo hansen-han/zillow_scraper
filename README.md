@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ```
 
 
-## Usage
+## Basic Usage
 
 ```Python
 from ZillowScraper import collect_real_estate_data
@@ -39,6 +39,8 @@ property_types = ["rent", "sale"]
 collect_real_estate_data(locations, property_types)
 
 ```
+
+For more detailed examples on usage and outputs you can expect, see ```examples/```
 
 ## Runtime
 Please be advised that this scraper is designed to avoid overwhelming their servers and preventing you from being blocked. Therefore, the default setting makes a web request every two minutes. This means the scraper can run for an extended period depending on the number of locations and property types you specify. Make sure to allocate sufficient time for the scraping operation to complete. 
