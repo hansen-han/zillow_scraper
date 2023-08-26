@@ -1,0 +1,5 @@
+,listing_type,price,unit_description,detailed_url,latitude,longitude,unit_address,unit_address_street,unit_city,unit_zipcode,beds,baths,area
+0,nested,,Oriana,/apartments/new-york-ny/oriana/5XWNCh/,40.755676,-73.96353,"420 E 54th St, New York, NY",420 E  54th St   Apt 1711,New York,10022,,,
+1,nested,,The Capitol,/b/the-capitol-new-york-ny-9gq5Q2/,40.74498,-73.99104,"776 6th Ave, New York, NY",776 6th Ave  # 17I,New York,10001,,,
+2,regular,4288,Apartment for rent,https://www.zillow.com/apartments/new-york-city-ny/the-capitol/27dS/,40.74498,-73.99104,"The Capitol, 776 Avenue Of The Americas #8G, New York, NY 10001",776 Avenue Of The Americas #8G,New York,10001,1,1,693
+3,nested,,The Aldyn,/b/the-aldyn-new-york-ny-2BHy/,40.774574,-73.99098,"60 Riverside Blvd, New York, NY",60 Riverside Blvd Apt 1016,New York,10069,,,
