@@ -31,7 +31,7 @@ python setup.py install
 import zillow_scraper
 
 # Define the target locations and types of properties to scrape
-# locations should follow a city-state format
+# locations should typically follow a city-state format
 locations = ["manhattan-ny", "san-francisco-ca"]
 property_types = ["rent", "sale"]
 
