@@ -14,49 +14,7 @@ headers = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-
 def make_frame_rentals(frame, data_list):
-    for i in data_list:
-        for item in i['props']['pageProps']['searchPageState']['cat1']['searchResults']['listResults']:
-            try:
-                num_units = len(item['units'])
-
-                unit_description = item['statusText']
-                unit_latitude = item['latLong']['latitude']
-                unit_longitude = item['latLong']['longitude']
-                unit_featured = item['isFeaturedListing']
-                unit_address = item['address']
-                unit_address_street = item['addressStreet']
-                unit_city = item['addressCity']
-                unit_zipcode = item['addressZipcode']
-                unit_img = item['imgSrc']
-
-                # TODO - where is sqft? 
-                for x in range(0, num_units):
-                    unit_price = item['units'][x]['price']
-                    unit_beds = item['units'][x]['beds']
-
-                    unit_dict = {
-                        "description": unit_description,
-                        "latitude": unit_latitude,
-                        "price": unit_price,
-                        "beds": unit_beds,
-                        "longitude": unit_longitude,
-                        "featured": unit_featured,
-                        "address": unit_address,
-                        "address_street": unit_address_street,
-                        "city": unit_city,
-                        "zipcode": unit_zipcode,
-                        "img": unit_img
-                    }
-
-                    frame = frame.append(unit_dict, ignore_index=True)
-            except:
-                pass
-
-    return frame
-
-def make_frame_rentals_detail(frame, data_list):
     for i in data_list:
         for item in i['props']['pageProps']['searchPageState']['cat1']['searchResults']['listResults']:
             try:
@@ -554,7 +512,6 @@ def get_units_from_detailed_url(detailed_url):
 
 
 def rental_frame_expander(frame, time_to_sleep):
-    # takes output from make_frame_rentals_detail
 
     # given a rental frame with nested and regular data, we want to get all units for each building
     for x in range(0, len(frame['listing_type'])):
@@ -629,7 +586,7 @@ def collect_real_estate_data(locations, property_types = ["rent", "sale"], outpu
                 df['best_deal'] = df['unformattedPrice'] - df['zestimate']
             else:
                 # convert the rental data json into a dataframe
-                df = make_frame_rentals_detail(df, data)
+                df = make_frame_rentals(df, data)
 
                 # get rid of duplicate rows (since some may be collected more than once)
                 df = df.drop_duplicates()
