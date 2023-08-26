@@ -47,4 +47,4 @@ Please be advised that this scraper is designed to avoid overwhelming their serv
 
 Collecting complete rental data can take considerably longer than sales data, and may take between several hours to days for a sufficiently large city (ie. Manhattan).
 
-If you are having issues with collecting data, you may have to change your IP address since it has been blocked.
+If you are having issues with collecting data, you may have to change your IP address since it may be blocked.
