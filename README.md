@@ -3,7 +3,7 @@ Collect complete rental and sales data for any location from Zillow.
 
 
 ## Description
-ZillowScraper is a Python package designed for scraping real estate data from Zillow. The scraper collects comprehensive details for rental and sale properties in specified locations. Extracted information includes unit number, price, square footage, number of baths, number of beds, and availability dates. The data is cleaned and formatted for further analysis and can be saved to CSV files.
+Python package designed for scraping real estate data from Zillow. The scraper collects comprehensive details for rental and sale properties in specified locations. Extracted information includes unit number, price, square footage, number of baths, number of beds, and availability dates. The data is cleaned and formatted for further analysis and can be saved to CSV files.
 
 ## Features
 - Scrape property details for specific locations from Zillow.
