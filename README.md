@@ -42,7 +42,9 @@ zillow_scraper.collect_real_estate_data(locations, property_types)
 
 For more detailed examples on usage and outputs you can expect, see ```examples/```
 
-## Runtime
+## Runtime & Issues
 Please be advised that this scraper is designed to avoid overwhelming their servers and preventing you from being blocked. Therefore, the default setting makes a web request every two minutes. This means the scraper can run for an extended period depending on the number of locations and property types you specify. Make sure to allocate sufficient time for the scraping operation to complete. 
 
 Collecting complete rental data can take considerably longer than sales data, and may take between several hours to days for a sufficiently large city (ie. Manhattan).
+
+If you are having issues with collecting data, you may have to change your IP address since it has been blocked.
