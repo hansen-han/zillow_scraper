@@ -360,7 +360,7 @@ def zillow_scraper(city, property_type, time_between_scrapes, min_price, testing
 
     try:
         # use selenium to extract the html from the site
-        driver = webdriver.Safari()
+        driver = webdriver.Chrome()
 
         url = 'https://www.zillow.com/homes/for_{property_type}/'.format(
             property_type=property_type) + city
@@ -529,7 +529,7 @@ def get_units_from_detailed_url(detailed_url):
             "Accept-Language": "en-US,en;q=0.9",
         }
         # use selenium to extract the html from the site
-        driver = webdriver.Safari()
+        driver = webdriver.Chrome()
 
         target_url = "https://www.zillow.com{detailed_url}".format(detailed_url=detailed_url)
         # open the page
