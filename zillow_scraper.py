@@ -3,18 +3,68 @@ import requests
 import json
 from bs4 import BeautifulSoup
 import pandas as pd
+import warnings
 import math
 import re
 import time
 import urllib.parse
+from selenium import webdriver
+import traceback
 
+
+
+# set config
+warnings.filterwarnings('ignore')
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     "Accept-Language": "en-US,en;q=0.9",
 }
 
+
+# helper functions
 def make_frame_rentals(frame, data_list):
+    for i in data_list:
+        for item in i['props']['pageProps']['searchPageState']['cat1']['searchResults']['listResults']:
+            try:
+                num_units = len(item['units'])
+
+                unit_description = item['statusText']
+                unit_latitude = item['latLong']['latitude']
+                unit_longitude = item['latLong']['longitude']
+                unit_featured = item['i sFeaturedListing']
+                unit_address = item['address']
+                unit_address_street = item['addressStreet']
+                unit_city = item['addressCity']
+                unit_zipcode = item['addressZipcode']
+                unit_img = item['imgSrc']
+
+                # TODO - where is sqft? 
+                for x in range(0, num_units):
+                    unit_price = item['units'][x]['price']
+                    unit_beds = item['units'][x]['beds']
+
+                    unit_dict = {
+                        "description": unit_description,
+                        "latitude": unit_latitude,
+                        "price": unit_price,
+                        "beds": unit_beds,
+                        "longitude": unit_longitude,
+                        "featured": unit_featured,
+                        "address": unit_address,
+                        "address_street": unit_address_street,
+                        "city": unit_city,
+                        "zipcode": unit_zipcode,
+                        "img": unit_img
+                    }
+
+                    frame = frame.append(unit_dict, ignore_index=True)
+            except:
+                pass
+
+    return frame
+
+def make_frame_rentals_detail(frame, data_list):
     for i in data_list:
         for item in i['props']['pageProps']['searchPageState']['cat1']['searchResults']['listResults']:
             try:
@@ -61,7 +111,7 @@ def make_frame_rentals(frame, data_list):
                     "unit_number": unit_number,
                 }
 
-                frame = frame.append(unit_dict, ignore_index=True)
+                frame = pd.concat([frame, pd.DataFrame([unit_dict])], ignore_index=True)
                 
             except:
                 pass
@@ -72,7 +122,7 @@ def make_frame_rentals(frame, data_list):
 def make_frame_sales(frame, data_list):
     for i in data_list:
         for item in i['props']['pageProps']['searchPageState']['cat1']['searchResults']['listResults']:
-            frame = frame.append(item, ignore_index=True)
+            frame = pd.concat([frame, pd.DataFrame([item])], ignore_index=True)
     return frame
 
 
@@ -309,9 +359,18 @@ def zillow_scraper(city, property_type, time_between_scrapes, min_price, testing
     # --- get the total number of listings for the run --- 
 
     try:
-        r = requests.get('https://www.zillow.com/homes/for_{property_type}/'.format(
-            property_type=property_type) + city, headers=headers)
-        html_content = r.text
+        # use selenium to extract the html from the site
+        driver = webdriver.Safari()
+
+        url = 'https://www.zillow.com/homes/for_{property_type}/'.format(
+            property_type=property_type) + city
+
+        # open the page
+        driver.get(url)
+
+        html_content = driver.page_source
+        driver.quit()
+
         num_listings = extract_listing_count(html_content)
 
         # --- calculate the number of listings per page... ---
@@ -385,7 +444,7 @@ def zillow_scraper(city, property_type, time_between_scrapes, min_price, testing
                 data_list.append(data)
 
                 # on the first request...check to see if it is the last sequence to run (are there 20 pages of data?)
-                if pg_num == 1: 
+                if pg_num == 1: # ERROR IS HERE....
                     num_listings = extract_listing_count(r.text)
                     num_listings_per_page = len(data['props']['pageProps']['searchPageState']['cat1']['searchResults']['listResults'])
                     pages_to_collect = math.ceil(num_listings/num_listings_per_page)
@@ -420,6 +479,9 @@ def zillow_scraper(city, property_type, time_between_scrapes, min_price, testing
                     data_list.append(data)
                 else:
                     # if there is no data, need to debug and figure out why it wasn't able to extract...
+                    print("=== Page HTML ====")
+                    print(r.text)
+                    print("=== End === ")
                     raise TypeError("extract_zillow_page_json() failed, aborting scraping run.")
 
                 # wait between each request to avoid being blocked
@@ -461,93 +523,145 @@ def extract_floor_plans(data):
     return None
 
 def get_units_from_detailed_url(detailed_url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        # use selenium to extract the html from the site
+        driver = webdriver.Safari()
 
-    target_url = "https://www.zillow.com{detailed_url}".format(detailed_url=detailed_url)
-    r = requests.get(target_url, headers=headers)
-    html_content = r.text
-    soup = BeautifulSoup(html_content, 'html.parser')
+        target_url = "https://www.zillow.com{detailed_url}".format(detailed_url=detailed_url)
+        # open the page
+        driver.get(target_url)
+        html_content = driver.page_source
+        driver.quit()
 
-    # extract the building info
-    script_tag = soup.find("script", id="__NEXT_DATA__")
+        soup = BeautifulSoup(html_content, 'html.parser')
 
-    # Check if the script tag was found
-    if script_tag:
-        # Extract the content of the <script> tag
-        script_content = script_tag.string
-    else:
-        print("Script tag not found.")
-    
-    data_dict = json.loads(script_content)
+        # extract the building info
+        script_tag = soup.find("script", id="__NEXT_DATA__")
 
-    floor_plans = extract_floor_plans(data_dict)
+        # Check if the script tag was found
+        if script_tag:
+            # Extract the content of the <script> tag
+            script_content = script_tag.string
+        else:
+            print("Script tag not found.")
+        
+        data_dict = json.loads(script_content)
 
-    # convert dictionary to pandas dataframe with relevant data
-    unit_number = []
-    price = []
-    sqft = []
-    baths = []
-    beds = []
-    available_from = []
-    for unit in floor_plans:
-        unit_number.append(unit['units'][0]['unitNumber'])
-        price.append(unit['units'][0]['price'])
-        sqft.append(unit['units'][0]['sqft'])
-        baths.append(unit['baths'])
-        beds.append(unit['beds'])
-        available_from.append(unit['units'][0]['availableFrom'])
+        floor_plans = extract_floor_plans(data_dict)
 
-    df = pd.DataFrame()
-    df['unit_number'] = unit_number
-    df['price'] = price
-    df['sqft'] = sqft
-    df['baths'] = baths
-    df['beds'] = beds
-    df['available_from'] = available_from
-    
+        # convert dictionary to pandas dataframe with relevant data
+        unit_number = []
+        price = []
+        sqft = []
+        baths = []
+        beds = []
+        available_from = []
+        for unit in floor_plans:
+            try:
+                unit_number.append(unit['units'][0]['unitNumber'])
+            except:
+                unit_number.append(None)
+            try:
+                price.append(unit['units'][0]['price'])
+            except:
+                price.append(None)
+            try:
+                sqft.append(unit['units'][0]['sqft'])
+            except:
+                sqft.append(None)
+            try:
+                baths.append(unit['baths'])
+            except:
+                baths.append(None)
+            try:
+                beds.append(unit['beds'])
+            except:
+                beds.append(None)
+            try:
+                available_from.append(unit['units'][0]['availableFrom'])
+            except:
+                available_from.append(None)
+
+        df = pd.DataFrame()
+        df['unit_number'] = unit_number
+        df['price'] = price
+        df['sqft'] = sqft
+        df['baths'] = baths
+        df['beds'] = beds
+        df['available_from'] = available_from
+        
+    except Exception as e:
+        print("Error in get_units_from_detailed_url:", e)
+        traceback.print_exc()
+        df = pd.DataFrame()
+        df['unit_number'] = []
+        df['price'] = []
+        df['sqft'] = []
+        df['baths'] = []
+        df['beds'] = []
+        df['available_from'] = []
+
     return df
 
 
 def rental_frame_expander(frame, time_to_sleep):
+    # takes output from make_frame_rentals_detail
+
+    new_frames = []
+
+    already_collected_unit_urls = list(set(list(frame[frame.listing_type == "expanded"]['detailed_url'])))
 
     # given a rental frame with nested and regular data, we want to get all units for each building
     for x in range(0, len(frame['listing_type'])):
         row = frame.iloc[x]
         if row['listing_type'] == "nested" and ".com" not in row['detailed_url']:
             try:
-                building_data = get_units_from_detailed_url(row['detailed_url'])
-                for j in range(0, len(building_data['unit_number'])):
-                    unit_row = building_data.iloc[j]
+                # since we run this in a loop, we need to check if it has already been collected.....
+                if row['detailed_url'] in already_collected_unit_urls:
+                    pass
+                else:
+                    building_data = get_units_from_detailed_url(row['detailed_url'])
+                    unit_dicts = []
 
+                    for j in range(0, len(building_data['unit_number'])):
+                        unit_row = building_data.iloc[j]
 
-                    unit_dict = {
-                        "listing_type": "expanded",
-                        "unit_description": row['unit_description'],
-                        "detailed_url": row['detailed_url'],
-                        "latitude": row['latitude'],
-                        "longitude": row['longitude'],
-                        "unit_address": row['unit_address'],
-                        "unit_address_street": row['unit_address_street'],
-                        "unit_city": row['unit_city'],
-                        "unit_zipcode": row['unit_zipcode'],
-                        "beds": unit_row['beds'],
-                        "baths": unit_row['baths'],
-                        "area": unit_row['sqft'],
-                        "price": unit_row['price'],
-                        "unit_number": unit_row['unit_number']
-                    }
+                        unit_dict = {
+                            "listing_type": "expanded",
+                            "unit_description": row['unit_description'],
+                            "detailed_url": row['detailed_url'],
+                            "latitude": row['latitude'],
+                            "longitude": row['longitude'],
+                            "unit_address": row['unit_address'],
+                            "unit_address_street": row['unit_address_street'],
+                            "unit_city": row['unit_city'],
+                            "unit_zipcode": row['unit_zipcode'],
+                            "beds": unit_row['beds'],
+                            "baths": unit_row['baths'],
+                            "area": unit_row['sqft'],
+                            "price": unit_row['price'],
+                            "unit_number": unit_row['unit_number']
+                        }
 
-                    frame = frame.append(unit_dict, ignore_index=True)
+                        unit_dicts.append(unit_dict)
 
-                time.sleep(time_to_sleep)
+                    new_frames.append(pd.DataFrame(unit_dicts))
 
-                
+                    time.sleep(time_to_sleep)
+
             except Exception as e:
+                print(row['detailed_url'])
+                print(row)
                 print("Error:", e)
+                traceback.print_exc()
                 pass
+    
+    if new_frames:
+        frame = pd.concat([frame] + new_frames, ignore_index=True)
     
     return frame
 
@@ -586,7 +700,7 @@ def collect_real_estate_data(locations, property_types = ["rent", "sale"], outpu
                 df['best_deal'] = df['unformattedPrice'] - df['zestimate']
             else:
                 # convert the rental data json into a dataframe
-                df = make_frame_rentals(df, data)
+                df = make_frame_rentals_detail(df, data)
 
                 # get rid of duplicate rows (since some may be collected more than once)
                 df = df.drop_duplicates()
@@ -626,8 +740,12 @@ def get_hoa_fee(url):
             text_content = target_span.string
             if text_content:
                 text_content = text_content.replace("$", "").replace(",", "").replace(" monthly HOA fee", "")
-                number = float(text_content)            
+                number = float(text_content)
+            # Extract the number from the string
+            #number_match = re.search(r'\$(\d+)', text_content)
+            
             if number:
+                #number = int(number_match.group(1))
                 return number
             else:
                 return None
@@ -635,4 +753,6 @@ def get_hoa_fee(url):
             return None
 
     except Exception as e:
+        print(e)
         return None
+
