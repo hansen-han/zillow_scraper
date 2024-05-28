@@ -16,6 +16,7 @@ Python package designed for scraping real estate data from Zillow. The scraper c
 - pandas
 - requests
 - json
+- selenium
 
 ## Installation
 ```
